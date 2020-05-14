@@ -19,10 +19,11 @@ spec:
     spec:
       containers:
       - name: rollouts-demo
-        image: argoproj/rollouts-demo:green
+        image: nginx:1.15.4   
+       # image: argoproj/rollouts-demo:green
         imagePullPolicy: Always
         ports:
-        - containerPort: 8080
+        - containerPort: 80
   strategy:
     canary:
       canaryService: canary-service # required
@@ -30,10 +31,10 @@ spec:
       trafficRouting:
         nginx:
            stableIngress: primary-ingress  # required
-           annotationPrefix: customingress.nginx.ingress.kubernetes.io # optional
+           #annotationPrefix: customingress.nginx.ingress.kubernetes.io # optional
            additionalIngressAnnotations: #optional
-             canary-by-header: X-Canary
-             canary-by-header-value: iwantsit
+             canary-by-header: canary
+             canary-by-header-value: zzm
       steps:
       - setWeight: 20
       # The following pause step will pause the rollout indefinitely until manually resumed.
@@ -51,9 +52,13 @@ kind: Ingress
 metadata:
   namespace: default
   name: primary-ingress
+  annotations:
+    # use the shared ingress-nginx
+    kubernetes.io/ingress.class: "nginx"
 spec:
   rules:
-    - http:
+    - host: ab.test.com
+      http:
         paths:
           - path: /
             backend:
@@ -70,7 +75,7 @@ spec:
   ports:
   - protocol: TCP
     port: 80
-    targetPort: 8080
+    targetPort: 80
 ---
 kind: Service
 apiVersion: v1
@@ -82,4 +87,4 @@ spec:
   ports:
   - protocol: TCP
     port: 80
-    targetPort: 8080
+    targetPort: 80
